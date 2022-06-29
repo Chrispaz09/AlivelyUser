@@ -11,10 +11,10 @@ namespace Alively.Core.Services
     {
         Task<User> CreateUserAsync(User user, CancellationToken token = default);
         
-        Task<User> GetUserAsync(int userId, CancellationToken token = default);
+        Task<User> GetUserAsync(Guid userUuid, CancellationToken token = default);
 
         Task<User> UpdateUserAsync(User user, CancellationToken token = default);
 
-        Task<bool> DeleteUserAsync(int userId, CancellationToken token = default);
+        Task<bool> DeleteUserAsync(Guid userUuid, CancellationToken token = default);
     }
 }

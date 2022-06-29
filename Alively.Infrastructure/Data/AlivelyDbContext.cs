@@ -19,7 +19,7 @@ namespace Alively.Infrastructure.Data
 
        protected override void OnConfiguring(DbContextOptionsBuilder builder)
         {
-            builder.UseSqlServer("Server=LT-5CG1407BSF;Database=AlivelyUser;Trusted_Connection=True;");
+            builder.UseSqlServer("Server=tcp:alivelyserver.database.windows.net,1433;Initial Catalog=AlivelyMVC_db;Persist Security Info=False;User ID=admin-sql;Password=Koenigseggone1*;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
         }
 
         public DbSet<User> Users { get; set; }

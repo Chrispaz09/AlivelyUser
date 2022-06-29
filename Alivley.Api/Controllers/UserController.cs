@@ -27,13 +27,15 @@ namespace Alivley.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] User user)
+        public async Task<IActionResult> Post([FromBody] UserDTO userDto)
         {
             try
             {
-                user.Password = _manageAccountService.SecurePassword(user.Password);
+                userDto.Password = _manageAccountService.SecurePassword(userDto.Password);
 
-                var userAdded = await _manageUserService.CreateUserAsync(user).ConfigureAwait(false);
+                var userAdded = await _manageUserService.CreateUserAsync(_mapper.Map<UserDTO, User>(userDto)).ConfigureAwait(false);
+
+                userAdded.Password = "";
 
                 return Ok(_mapper.Map<UserDTO>(userAdded));
             }
@@ -44,11 +46,13 @@ namespace Alivley.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> Get(Guid uuid)
         {
             try
             {
-                var userGet = await _manageUserService.GetUserAsync(id).ConfigureAwait(false);
+                var userGet = await _manageUserService.GetUserAsync(uuid).ConfigureAwait(false);
+
+                userGet.Password = "";
 
                 return Ok(_mapper.Map<UserDTO>(userGet));
             }
@@ -58,12 +62,25 @@ namespace Alivley.Api.Controllers
             }
         }
 
-        [HttpPut]
-        public async Task<IActionResult> Put([FromBody] User user)
+        [HttpPut("{uuid}")]
+        public async Task<IActionResult> Put(Guid uuid, [FromBody] UserDTO userDto)
         {
             try
             {
+                if(uuid ==  Guid.Empty || userDto == null)
+                {
+                    return BadRequest();
+                }
+
+                var user = new User();
+
+                user = _mapper.Map<UserDTO, User>(userDto);
+
+                user.Uuid = uuid;
+               
                 var userUpdate = await _manageUserService.UpdateUserAsync(user).ConfigureAwait(false);
+
+                userUpdate.Password = "";
 
                 return Ok(_mapper.Map<UserDTO>(userUpdate));
             }
@@ -75,11 +92,16 @@ namespace Alivley.Api.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(Guid uuid)
         {
             try
             {
-                var result = await _manageUserService.DeleteUserAsync(id).ConfigureAwait(false);
+                if(uuid == Guid.Empty)
+                {
+                    return BadRequest();
+                }
+
+                var result = await _manageUserService.DeleteUserAsync(uuid).ConfigureAwait(false);
 
                 return Ok(result);
             }
@@ -118,6 +140,66 @@ namespace Alivley.Api.Controllers
             }
             catch
             {
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPost]
+        [Route("Login")]
+        public async Task<IActionResult> Login(string username, string password)
+        {
+            try
+            {
+                var userUuid = await _manageAccountService.GetUserUuidByUsername(username).ConfigureAwait(false);
+
+                if(userUuid == Guid.Empty)
+                {
+                    return NotFound();
+                }
+
+                var isVerified = await _manageAccountService.VerifyHashPassword(userUuid, password);
+
+                if(isVerified)
+                {
+                    var userGet = await _manageUserService.GetUserAsync(userUuid).ConfigureAwait(false);
+
+                    userGet.Password = "";
+
+                    return Ok(_mapper.Map<UserDTO>(userGet));
+                }
+
+                return StatusCode(401);
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPost("ChangePassword/{uuid}")]
+        public async Task<IActionResult> ChangeUserPassword(Guid uuid, string newPassword)
+        {
+            try
+            {
+                if(uuid == Guid.Empty || string.IsNullOrEmpty(newPassword))
+                {
+                    return BadRequest();
+                }
+
+                var doesUuidExist = await _manageAccountService.DoesUuidExist(uuid).ConfigureAwait(false);
+
+                if(doesUuidExist)
+                {
+                    await _manageAccountService.ChangePassword(newPassword, uuid).ConfigureAwait(false);
+
+                    return Ok();
+                }
+
+                return NotFound();
+            }
+            catch 
+            {
+
                 return StatusCode(500);
             }
         }

@@ -23,10 +23,16 @@ namespace Alively.Core.Services
         /// <param name="password">The hashed password. </param>
         /// <param name="token">The Cancellation token. </param>
         /// <returns>True if the hashed password matches the hash password in the database. </returns>
-        Task<bool> VerifyHashPassword(int userId, string password, CancellationToken token = default);
+        Task<bool> VerifyHashPassword(Guid userUuid, string password, CancellationToken token = default);
 
         Task<bool> DoesUsernameAlreadyExist(string username, CancellationToken token = default);
 
         Task<bool> IsEmailAlreadyRegistered(string email, CancellationToken token = default);
+
+        Task<Guid> GetUserUuidByUsername(string username, CancellationToken token = default);
+
+        Task ChangePassword(string newPassword, Guid userUuid, CancellationToken token = default);
+
+        Task<bool> DoesUuidExist(Guid uuid, CancellationToken token = default);
     }
 }

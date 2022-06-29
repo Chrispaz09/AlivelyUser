@@ -1,9 +1,13 @@
+using Alively.Core.Entities;
 using Alively.Core.Repositories;
 using Alively.Core.Services;
 using Alively.Infrastructure.Data;
 using Alively.Infrastructure.Repositories;
 using Alively.Infrastructure.Services;
 using Alivley.Api.ConfigurationExtensions;
+using Alivley.Api.DTOs;
+using Alivley.Api.Profiles;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +20,10 @@ var builder = WebApplication.CreateBuilder(args);
 //    )
 //);
 
+var config = new MapperConfiguration(config =>
+    config.AddProfile<UserProfile>()
+);
+
 builder.Services.AddDbContext<AlivelyDbContext>();
 builder.Services.AddScoped<DbContext, AlivelyDbContext>();
 
@@ -23,7 +31,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<IManageUserService, ManageUserService>();
 builder.Services.AddScoped<IManageAccountService, ManageAccountService>();
-builder.Services.AddAutoMapper();
+builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

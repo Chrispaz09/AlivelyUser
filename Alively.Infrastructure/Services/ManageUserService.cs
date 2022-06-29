@@ -1,6 +1,7 @@
 ﻿using Alively.Core.Entities;
 using Alively.Core.Repositories;
 using Alively.Core.Services;
+using Ardalis.GuardClauses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,54 +21,34 @@ namespace Alively.Infrastructure.Services
 
         public async Task<User> CreateUserAsync(User user, CancellationToken token = default)
         {
-            try
-            {
-                return await _userRepository.CreateAsync(user, token).ConfigureAwait(false);
-            }
-            catch 
-            {
-
-                return User.NotValid;
-            }
+            return await _userRepository.CreateAsync(user, token).ConfigureAwait(false);
         }
 
-        public async Task<bool> DeleteUserAsync(int userId, CancellationToken token = default)
+        public async Task<bool> DeleteUserAsync(Guid userUuid, CancellationToken token = default)
         {
             try
             {
-                await _userRepository.DeleteAsync(userId, token).ConfigureAwait(false);
+                await _userRepository.DeleteAsync(userUuid, token).ConfigureAwait(false);
 
                 return true;
             }
-            catch 
+            catch
             {
                 return false;
-                
+
             }
         }
 
-        public async Task<User> GetUserAsync(int userId, CancellationToken token = default)
+        public async Task<User> GetUserAsync(Guid userUuid, CancellationToken token = default)
         {
-            try
-            {
-                return await _userRepository.GetAsync(userId, token).ConfigureAwait(false);
-            }
-            catch 
-            {
-                return User.NotFound;
-            }
+            return await _userRepository.GetAsync(userUuid, token).ConfigureAwait(false);
         }
 
         public async Task<User> UpdateUserAsync(User user, CancellationToken token = default)
         {
-            try
-            {
-                return await _userRepository.UpdateAsync(user, token).ConfigureAwait(false);
-            }
-            catch 
-            {
-                return User.NotValid;
-            }
+            Guard.Against.Null(user, nameof(user));
+
+            return await _userRepository.UpdateAsync(user, token).ConfigureAwait(false);
         }
     }
 }

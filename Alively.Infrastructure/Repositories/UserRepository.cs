@@ -23,7 +23,9 @@ namespace Alively.Infrastructure.Repositories
 
         public async Task<User> CreateAsync(User user, CancellationToken token = default)
         {
-            Guard.Against.Null(user, nameof(user));
+            Guard.Against.Null(user, nameof(user), "User is missing. ");
+
+            user.Uuid = Guid.NewGuid();
 
             UserValidator.Validate(user);
 
@@ -34,11 +36,9 @@ namespace Alively.Infrastructure.Repositories
             return addedUser.Entity;
         }
 
-        public async Task DeleteAsync(int id, CancellationToken token = default)
+        public async Task DeleteAsync(Guid uuid, CancellationToken token = default)
         {
-            Guard.Against.NegativeOrZero(id, nameof(id));
-
-            var getUser = await _context.Users.FirstOrDefaultAsync(users => users.Id == id, token).ConfigureAwait(false);
+            var getUser = await _context.Users.FirstOrDefaultAsync(users => users.Uuid == uuid, token).ConfigureAwait(false);
 
             Guard.Against.Null(getUser, nameof(getUser));
 
@@ -54,11 +54,9 @@ namespace Alively.Infrastructure.Repositories
             return await _context.Users.AnyAsync(users => users.UserName == username).ConfigureAwait(false);
         }
 
-        public async Task<User> GetAsync(int id, CancellationToken token = default)
+        public async Task<User> GetAsync(Guid uuid, CancellationToken token = default)
         {
-            Guard.Against.NegativeOrZero(id, nameof(id));
-
-            return await _context.Users.FirstOrDefaultAsync(users => users.Id == id, token).ConfigureAwait(false);
+            return await _context.Users.FirstOrDefaultAsync(users => users.Uuid == uuid, token).ConfigureAwait(false);
         }
 
         public async Task<bool> IsEmailAlreadyRegistered(string email, CancellationToken token = default)
@@ -72,13 +70,55 @@ namespace Alively.Infrastructure.Repositories
         {
             Guard.Against.Null(user, nameof(user));
 
-            UserValidator.Validate(user);
+            var userToUpdate = await GetAsync(user.Uuid, token).ConfigureAwait(false);
 
-            var addedUser = _context.Users.Update(user);
+            Guard.Against.Null(userToUpdate, nameof(userToUpdate), "User was not found.");
+
+            userToUpdate.FirstName = user.FirstName;
+
+            userToUpdate.LastName = user.LastName;
+
+            userToUpdate.Email = user.Email;
+
+            userToUpdate.Age = user.Age;
+
+            userToUpdate.UserName = user.UserName;
 
             await _context.SaveChangesAsync(token);
 
-            return addedUser.Entity;
+            return await GetAsync(user.Uuid).ConfigureAwait(false);
+        }
+        
+        public async Task<Guid> GetUserUuidByUsername(string username, CancellationToken token = default)
+        {
+            Guard.Against.NullOrWhiteSpace(username, nameof(username));
+
+            var getUser = await _context.Users.FirstOrDefaultAsync(users => users.UserName == username).ConfigureAwait(false);
+
+            if(getUser is null)
+            {
+                return Guid.Empty;
+            }
+
+            return getUser.Uuid;
+        }
+
+        public async Task ChangeUserPassword(string newPassword, Guid uuid, CancellationToken token = default)
+        {
+            Guard.Against.NullOrWhiteSpace(newPassword, nameof(newPassword));
+
+            var user = await _context.Users.FirstOrDefaultAsync(users => users.Uuid == uuid, token).ConfigureAwait(false);
+
+            Guard.Against.Null(user);
+
+            user.Password = newPassword;
+
+            await _context.SaveChangesAsync(token).ConfigureAwait(false);
+        }
+
+        public async Task<bool> DoesUuidExist(Guid uuid, CancellationToken token = default)
+        {
+            return await _context.Users.AnyAsync(users => users.Uuid == uuid).ConfigureAwait(false);
         }
     }
 }

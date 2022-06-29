@@ -55,7 +55,7 @@ namespace Alively.InfrastructureTest.Repositories
         {
             var addedUser = await _userRepository.CreateAsync(_userTest).ConfigureAwait(false);
 
-            var getUser = await _userRepository.GetAsync(addedUser.Id).ConfigureAwait(false);
+            var getUser = await _userRepository.GetAsync(addedUser.Uuid).ConfigureAwait(false);
 
             getUser.Uuid.ShouldBe(_userTest.Uuid);
         }
@@ -83,9 +83,9 @@ namespace Alively.InfrastructureTest.Repositories
         {
             var addedUser = await _userRepository.CreateAsync(_userTest).ConfigureAwait(false);
 
-            await _userRepository.DeleteAsync(addedUser.Id).ConfigureAwait(false);
+            await _userRepository.DeleteAsync(addedUser.Uuid).ConfigureAwait(false);
 
-            var getUser = await _userRepository.GetAsync(addedUser.Id).ConfigureAwait(false);
+            var getUser = await _userRepository.GetAsync(addedUser.Uuid).ConfigureAwait(false);
 
             getUser.ShouldBeNull();
         }
